@@ -202,58 +202,47 @@ def handle_private(message: pyrogram.types.messages_and_media.message.Message, c
 		bot.delete_messages(message.chat.id,[smsg.id])
 
 
+# get the type of message
 def get_message_type(msg: pyrogram.types.messages_and_media.message.Message):
-    try:
-        if msg.document:
-            return "Document"
-    except AttributeError:
-        pass
+	try:
+		msg.document.file_id
+		return "Document"
+	except: pass
 
-    try:
-        if msg.video:
-            return "Video"
-    except AttributeError:
-        pass
+	try:
+		msg.video.file_id
+		return "Video"
+	except: pass
 
-    try:
-        if msg.animation:
-            return "Animation"
-    except AttributeError:
-        pass
+	try:
+		msg.animation.file_id
+		return "Animation"
+	except: pass
 
-    try:
-        if msg.sticker:
-            return "Sticker"
-    except AttributeError:
-        pass
+	try:
+		msg.sticker.file_id
+		return "Sticker"
+	except: pass
 
-    try:
-        if msg.voice:
-            return "Voice"
-    except AttributeError:
-        pass
+	try:
+		msg.voice.file_id
+		return "Voice"
+	except: pass
 
-    try:
-        if msg.audio:
-            return "Audio"
-    except AttributeError:
-        pass
+	try:
+		msg.audio.file_id
+		return "Audio"
+	except: pass
 
-    try:
-        if msg.photo:
-            return "Photo"
-    except AttributeError:
-        pass
+	try:
+		msg.photo.file_id
+		return "Photo"
+	except: pass
 
-    try:
-        if msg.text:
-            return "Text"
-    except AttributeError:
-        pass
-
-    return "Unknown"  # Return "Unknown" if none of the checks match
-
-
+	try:
+		msg.text
+		return "Text"
+	except: pass
 
 
 USAGE = """**FOR PUBLIC CHATS**
