@@ -3,8 +3,6 @@ from pyrogram import Client, filters
 from pyrogram.errors import UserAlreadyParticipant, InviteHashExpired, UsernameNotOccupied
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-import tracemalloc
-tracemalloc.start()
 import time
 import os
 import threading
