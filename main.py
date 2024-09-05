@@ -1,5 +1,5 @@
 import pyrogram
-from pyrogram import Client, filters
+from pyrogram import Client,
 from pyrogram.errors import UserAlreadyParticipant, InviteHashExpired, UsernameNotOccupied
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -277,4 +277,4 @@ https://t.me/c/xxxx/101 - 120
 
 
 # infinty polling
-bot.run_until_disconnected()
+bot.run()
