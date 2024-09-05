@@ -277,4 +277,4 @@ https://t.me/c/xxxx/101 - 120
 
 
 # infinty polling
-bot.run()
+bot.run_until_disconnected()
