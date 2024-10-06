@@ -4,7 +4,6 @@ from pyrogram.errors import UserAlreadyParticipant, InviteHashExpired, UsernameN
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
 import os
-import json
 from os import environ
 
 bot_token = environ.get("TOKEN", "") 
@@ -56,19 +55,72 @@ async def send_start(client: pyrogram.client.Client, message: pyrogram.types.mes
 @bot.on_message(filters.text)
 async def save(client: pyrogram.client.Client, message: pyrogram.types.messages_and_media.message.Message):
     print(message.text)
-    # Joining chats logic remains unchanged
-    # ...
+
+    # Logic for joining chats or processing messages
+    if "https://t.me/+" in message.text or "https://t.me/joinchat/" in message.text:
+        if acc is None:
+            await bot.send_message(message.chat.id, "**String Session is not Set**", reply_to_message_id=message.id)
+            return
+        try:
+            await acc.join_chat(message.text)
+            await bot.send_message(message.chat.id, "**Chat Joined**", reply_to_message_id=message.id)
+        except UserAlreadyParticipant:
+            await bot.send_message(message.chat.id, "**Chat already Joined**", reply_to_message_id=message.id)
+        except InviteHashExpired:
+            await bot.send_message(message.chat.id, "**Invalid Link**", reply_to_message_id=message.id)
+        except Exception as e:
+            await bot.send_message(message.chat.id, f"**Error** : __{e}__", reply_to_message_id=message.id)
+            return
+
+    # Processing message links
+    elif "https://t.me/" in message.text:
+        datas = message.text.split("/")
+        temp = datas[-1].replace("?single", "").split("-")
+        fromID = int(temp[0].strip())
+        toID = int(temp[1].strip()) if len(temp) > 1 else fromID
+
+        for msgid in range(fromID, toID + 1):
+            if "https://t.me/c/" in message.text:
+                chatid = int("-100" + datas[4])
+                if acc is None:
+                    await bot.send_message(message.chat.id, "**String Session is not Set**", reply_to_message_id=message.id)
+                    return
+                await handle_private(message, chatid, msgid)
+
+            elif "https://t.me/b/" in message.text:
+                username = datas[4]
+                if acc is None:
+                    await bot.send_message(message.chat.id, "**String Session is not Set**", reply_to_message_id=message.id)
+                    return
+                await handle_private(message, username, msgid)
+
+            else:
+                username = datas[3]
+                try:
+                    msg = await bot.get_messages(username, msgid)
+                    await bot.copy_message(message.chat.id, msg.chat.id, msg.id, reply_to_message_id=message.id)
+                except UsernameNotOccupied:
+                    await bot.send_message(message.chat.id, "**The username is not occupied by anyone**", reply_to_message_id=message.id)
+                    return
+                except Exception as e:
+                    await bot.send_message(message.chat.id, f"**Error** : __{e}__", reply_to_message_id=message.id)
+
+            await asyncio.sleep(3)  # Rate limiting
 
 async def handle_private(message: pyrogram.types.messages_and_media.message.Message, chatid: int, msgid: int):
-    msg = await acc.get_messages(chatid, msgid)
-    msg_type = get_message_type(msg)
+    try:
+        msg = await acc.get_messages(chatid, msgid)
+    except Exception as e:
+        await bot.send_message(message.chat.id, f"**Error retrieving message**: {e}", reply_to_message_id=message.id)
+        return
 
+    msg_type = get_message_type(msg)
     smsg = await bot.send_message(message.chat.id, '__Downloading__', reply_to_message_id=message.id)
 
     # Start download status
     asyncio.create_task(downstatus(f'{message.id}downstatus.txt', smsg))
     file = await acc.download_media(msg, progress=progress, progress_args=[message, "down"])
-    
+
     if os.path.exists(f'{message.id}downstatus.txt'):
         os.remove(f'{message.id}downstatus.txt')
 
@@ -80,14 +132,17 @@ async def handle_private(message: pyrogram.types.messages_and_media.message.Mess
         await bot.send_document(message.chat.id, file, thumb=thumb, caption=msg.caption, reply_to_message_id=message.id, 
                                 progress=progress, progress_args=[message, "up"])
     # Handle other message types similarly...
+    # ...
 
     os.remove(file)
     if os.path.exists(f'{message.id}upstatus.txt'):
         os.remove(f'{message.id}upstatus.txt')
     await bot.delete_messages(message.chat.id, [smsg.id])
 
-# The rest of your functions remain mostly unchanged
-# Ensure all calls to async functions are awaited
+def get_message_type(msg):
+    # Your logic for determining message type
+    ...
+
 USAGE = """..."""
 
 bot.run()
