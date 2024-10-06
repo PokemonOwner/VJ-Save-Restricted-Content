@@ -24,10 +24,10 @@ async def downstatus(statusfile, message):
         with open(statusfile, "r") as downread:
             txt = downread.read()
         try:
-            await bot.edit_message_text(message.chat.id, message.id, f"__Downloaded__ : **{txt}**")
+            await bot.edit_message_text(message.chat.id, message.id, f"__Downloading__ : **{txt}**")
             await asyncio.sleep(10)
         except Exception as e:
-            print(e)
+            print(f"Error updating download status: {e}")
             await asyncio.sleep(5)
 
 async def upstatus(statusfile, message):
@@ -36,27 +36,31 @@ async def upstatus(statusfile, message):
         with open(statusfile, "r") as upread:
             txt = upread.read()
         try:
-            await bot.edit_message_text(message.chat.id, message.id, f"__Uploaded__ : **{txt}**")
+            await bot.edit_message_text(message.chat.id, message.id, f"__Uploading__ : **{txt}**")
             await asyncio.sleep(10)
         except Exception as e:
-            print(e)
+            print(f"Error updating upload status: {e}")
             await asyncio.sleep(5)
 
 async def progress(current, total, message, type):
+    percentage = current * 100 / total
     with open(f'{message.id}{type}status.txt', "w") as fileup:
-        fileup.write(f"{current * 100 / total:.1f}%")
+        fileup.write(f"{percentage:.1f}%")
+    print(f"{type.capitalize()} progress: {percentage:.1f}%")  # Log progress
 
 @bot.on_message(filters.command(["start"]))
 async def send_start(client: pyrogram.client.Client, message: pyrogram.types.messages_and_media.message.Message):
-    await bot.send_message(message.chat.id, f"**__👋 Hi** **{message.from_user.mention}**, **I am Save Restricted Bot, I can send you restricted content by its post link__**\n\n{USAGE}",
-                           reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🌐 Update Channel", url="https://t.me/VJ_Botz")]]), 
-                           reply_to_message_id=message.id)
+    await bot.send_message(
+        message.chat.id,
+        f"**__👋 Hi** **{message.from_user.mention}**, **I am Save Restricted Bot, I can send you restricted content by its post link__**\n\n{USAGE}",
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🌐 Update Channel", url="https://t.me/VJ_Botz")]]), 
+        reply_to_message_id=message.id
+    )
 
 @bot.on_message(filters.text)
 async def save(client: pyrogram.client.Client, message: pyrogram.types.messages_and_media.message.Message):
-    print(message.text)
+    print(f"Received message: {message.text}")
 
-    # Logic for joining chats or processing messages
     if "https://t.me/+" in message.text or "https://t.me/joinchat/" in message.text:
         if acc is None:
             await bot.send_message(message.chat.id, "**String Session is not Set**", reply_to_message_id=message.id)
@@ -72,7 +76,6 @@ async def save(client: pyrogram.client.Client, message: pyrogram.types.messages_
             await bot.send_message(message.chat.id, f"**Error** : __{e}__", reply_to_message_id=message.id)
             return
 
-    # Processing message links
     elif "https://t.me/" in message.text:
         datas = message.text.split("/")
         temp = datas[-1].replace("?single", "").split("-")
@@ -132,7 +135,6 @@ async def handle_private(message: pyrogram.types.messages_and_media.message.Mess
         await bot.send_document(message.chat.id, file, thumb=thumb, caption=msg.caption, reply_to_message_id=message.id, 
                                 progress=progress, progress_args=[message, "up"])
     # Handle other message types similarly...
-    # ...
 
     os.remove(file)
     if os.path.exists(f'{message.id}upstatus.txt'):
@@ -141,7 +143,26 @@ async def handle_private(message: pyrogram.types.messages_and_media.message.Mess
 
 def get_message_type(msg):
     # Your logic for determining message type
-    ...
+    try:
+        if msg.document:
+            return "Document"
+        elif msg.video:
+            return "Video"
+        elif msg.animation:
+            return "Animation"
+        elif msg.sticker:
+            return "Sticker"
+        elif msg.voice:
+            return "Voice"
+        elif msg.audio:
+            return "Audio"
+        elif msg.photo:
+            return "Photo"
+        elif msg.text:
+            return "Text"
+    except Exception as e:
+        print(f"Error determining message type: {e}")
+    return "Unknown"
 
 USAGE = """..."""
 
